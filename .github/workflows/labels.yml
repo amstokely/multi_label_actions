@@ -30,6 +30,6 @@ jobs:
       - name: Trigger Dispatch Workflow
         if: success()
         run: |
-          gh workflow run dispatch-test-workflow.yml -f branch=main
+          gh workflow run dispatch-test-workflow.yml
         env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
