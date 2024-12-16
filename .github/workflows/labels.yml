@@ -18,18 +18,21 @@ jobs:
         with:
           script: |
             const labels = context.payload.pull_request.labels.map(label => label.name);
-            return labels;
+            return labels.filter(label => label.toLowerCase().includes("test"));
           result-encoding: string
 
-      - name: Filter labels for "test"
-        id: filter
+      - name: Debug matching labels
         run: |
-          echo "Checking for test labels..."
-          echo "${{ steps.labels.outputs.result }}" | grep -i "test" || exit 1
+          echo "Matching labels: ${{ steps.labels.outputs.result }}"
+        env:
+          LABELS: ${{ steps.labels.outputs.result }}
 
-      - name: Trigger Dispatch Workflow
-        if: success()
+      - name: Trigger Dispatch Workflow for Each Label
+        if: ${{ steps.labels.outputs.result != '' }}
         run: |
-          gh workflow run dispatch-test-workflow.yml
+          for label in $(echo "${{ steps.labels.outputs.result }}" | jq -r '.[]'); do
+            echo "Triggering dispatch workflow for label: $label"
+            gh workflow run dispatch-test-workflow.yml --ref "${{ github.event.pull_request.head.ref }}"
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
