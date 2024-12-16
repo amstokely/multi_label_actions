@@ -1,3 +1,4 @@
+
 name: Proxy Label Check
 
 on:
@@ -18,21 +19,18 @@ jobs:
         with:
           script: |
             const labels = context.payload.pull_request.labels.map(label => label.name);
-            return labels.filter(label => label.toLowerCase().includes("test"));
+            return labels;
           result-encoding: string
 
-      - name: Debug matching labels
+      - name: Filter labels for "test"
+        id: filter
         run: |
-          echo "Matching labels: ${{ steps.labels.outputs.result }}"
-        env:
-          LABELS: ${{ steps.labels.outputs.result }}
+          echo "Checking for test labels..."
+          echo "${{ steps.labels.outputs.result }}" | grep -i "test" || exit 1
 
-      - name: Trigger Dispatch Workflow for Each Label
-        if: ${{ steps.labels.outputs.result != '' }}
+      - name: Trigger Dispatch Workflow
+        if: success()
         run: |
-          for label in $(echo "${{ steps.labels.outputs.result }}" | jq -r '.[]'); do
-            echo "Triggering dispatch workflow for label: $label"
-            gh workflow run dispatch-test-workflow.yml --ref "${{ github.event.pull_request.head.ref }}"
-          done
+          gh workflow run dispatch-test-workflow.yml
         env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
