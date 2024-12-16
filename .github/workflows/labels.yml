@@ -1,4 +1,4 @@
-name: PR Label Trigger Workflow
+name: Proxy Label Check
 
 on:
   pull_request:
@@ -6,29 +6,30 @@ on:
       - labeled
 
 jobs:
-  handle-label:
+  check-labels:
     runs-on: ubuntu-latest
-
     steps:
-      # Step 1: Checkout the repository
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Identify the added label
-      - name: Display added label
-        run: |
-          echo "Label added: ${{ github.event.label.name }}"
-          echo "PR Title: ${{ github.event.pull_request.title }}"
-          echo "PR Number: ${{ github.event.pull_request.number }}"
+      - name: Get PR labels
+        id: labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(label => label.name);
+            return labels;
+          result-encoding: string
 
-      # Step 3: Conditional task based on the label
-      - name: Run tasks based on label
+      - name: Filter labels for "test"
+        id: filter
         run: |
-          if [[ "${{ github.event.label.name }}" == "run-tests" ]]; then
-            echo "Running tests because 'run-tests' label was added."
-            # Add test commands here
-          elif [[ "${{ github.event.label.name }}" == "documentation" ]]; then
-            echo "Updating documentation because 'documentation' label was added."
-            # Add documentation update commands here
-          else
-            echo "No action for this label."
+          echo "Checking for test labels..."
+          echo "${{ steps.labels.outputs.result }}" | grep -i "test" || exit 1
+
+      - name: Trigger Dispatch Workflow
+        if: success()
+        run: |
+          gh workflow run dispatch-test-workflow.yml --ref ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
