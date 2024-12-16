@@ -2,11 +2,6 @@ name: Dispatch Test Workflow
 
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: "Branch to run the tests on"
-        required: false
-        default: "main"
 
 jobs:
   run-tests:
@@ -15,7 +10,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.inputs.branch }}
+          ref: main
 
       - name: Run Tests
-        run: echo "Running tests on branch ${{ github.event.inputs.branch }}"
+        run: echo "Running tests on branch main"
