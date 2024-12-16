@@ -30,8 +30,6 @@ jobs:
       - name: Trigger Dispatch Workflow
         if: success()
         run: |
-          COMMIT_SHA=${{ github.event.pull_request.head.sha }}
-          echo "Triggering workflow for commit: $COMMIT_SHA"
           gh workflow run dispatch-test-workflow.yml
         env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
